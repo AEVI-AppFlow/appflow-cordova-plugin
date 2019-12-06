@@ -1,0 +1,14 @@
+{
+    "compilerOptions": {
+        "target": "es2015",
+        "module": "amd",
+        "declaration": true,
+        "outDir": "./www",
+        "strict": true,
+        "strictPropertyInitialization": false,
+        "moduleResolution": "node"
+    },
+    "exclude": [
+        "www"
+    ]
+}

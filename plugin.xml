@@ -1,0 +1,52 @@
+<?xml version='1.0' encoding='utf-8'?>
+<plugin id="com.aevi.sdk.flow.cordova" version="0.0.1" xmlns="http://apache.org/cordova/ns/plugins/1.0" xmlns:android="http://schemas.android.com/apk/res/android">
+    <name>AppFlowPlugin</name>
+    <platform name="android">
+        <config-file parent="/*" target="res/xml/config.xml">
+            <feature name="AppFlowPlugin">
+                <param name="android-package" value="com.aevi.sdk.flow.cordova.AppFlowPlugin" />
+            </feature>
+        </config-file>
+        <config-file  parent="/manifest/application" target="AndroidManifest.xml">
+            <service
+                android:name="com.aevi.sdk.flow.cordova.AppFlowPaymentResponseListenerService"
+                android:exported="true">
+                <intent-filter>
+                    <action android:name="com.aevi.sdk.flow.action.PROCESS_PAYMENT_RESPONSE"/>
+                </intent-filter>
+            </service>
+            <service
+                android:name="com.aevi.sdk.flow.cordova.AppFlowResponseListenerService"
+                android:exported="true">
+                <intent-filter>
+                    <action android:name="com.aevi.sdk.flow.action.PROCESS_RESPONSE"/>
+                </intent-filter>
+            </service>
+        </config-file>
+        <source-file src="src/android/AppFlowPlugin.java" target-dir="src/com/aevi/sdk/flow/cordova" />
+        <source-file src="src/android/AppFlowPaymentResponseListenerService.java" target-dir="src/com/aevi/sdk/flow/cordova" />
+        <source-file src="src/android/AppFlowResponseListenerService.java" target-dir="src/com/aevi/sdk/flow/cordova" />
+        <framework src="com.aevi.sdk.pos.flow:payment-initiation-api:2.1.2"/>
+        <js-module name="AppFlowPlugin" src="www/index.js">
+            <clobbers target="cordova.plugins.AppFlowPlugin" />
+        </js-module>
+    </platform>
+    <platform name="browser">
+        <config-file target="config.xml" parent="/*">
+            <feature name="AppFlowPlugin">
+                <param name="browser-package" value="AppFlowPlugin" />
+            </feature>
+        </config-file>
+
+        <js-module src="src/browser/AppFlowPlugin.js" name="AppFlowPlugin">
+            <runs />
+        </js-module>
+        <js-module src="src/browser/payment-settings.js" name="payment-settings"></js-module>
+        <js-module src="src/browser/payment-response.js" name="payment-response"></js-module>
+        <js-module src="src/browser/reversal-response.js" name="reversal-response"></js-module>
+        <js-module src="src/browser/tokenisation-response.js" name="tokenisation-response"></js-module>
+        <js-module src="src/browser/receipt-delivery-response.js" name="receipt-delivery-response"></js-module>
+        <js-module src="src/browser/loyalty-response.js" name="loyalty-response"></js-module>
+        <js-module src="src/browser/basket-status-response.js" name="basket-status-response"></js-module>
+    </platform>
+</plugin>
