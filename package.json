@@ -1,0 +1,35 @@
+{
+  "name": "appflow-cordova-plugin",
+  "version": "0.0.0",
+  "main": "www/index.js",
+  "scripts": {
+    "build": "tsc",
+    "test": "jest",
+    "coverage": "jest --coverage"
+  },
+  "types": "www/index.d.ts",
+  "cordova": {
+    "id": "com.aevi.sdk.flow.cordova",
+    "platforms": [
+      "android"
+    ]
+  },
+  "keywords": [
+    "ecosystem:cordova",
+    "cordova-android"
+  ],
+  "author": "Brett Cherrington",
+  "license": "Apache-2.0",
+  "description": "",
+  "dependencies": {
+    "@types/cordova": "0.0.34",
+    "appflow-payment-initiation-api": "0.0.1",
+    "rxjs": "6.4.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^24.0.23",
+    "jest": "^24.9.0",
+    "ts-jest": "^24.2.0",
+    "typescript": "^3.7.3"
+  }
+}
