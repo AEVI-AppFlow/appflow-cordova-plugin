@@ -23,8 +23,6 @@ module.exports = {
         success("javascript.mock.api");
     },
     setPaymentResponseCallback: function(success, error, opts) {
-        console.log("joijofjofs");
-        console.log(success);
         paymentResponseCallback = success;
     },
     setResponseCallback: function(success, error, opts) {
