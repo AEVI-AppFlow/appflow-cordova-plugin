@@ -2,6 +2,28 @@
 
 This plugin provides an implementation of the AppFlow API for Cordova based applications.
 
+## Installation
+
+To install this plugin into your cordova application
+
+```
+cordova plugin add appflow-cordova-plugin
+```
+
+## Usage
+
+Once installed into you application you can obtain a handle to the API as follows along with an instance of the payment client upon which you can initiate payments and other request.
+
+```
+var paymentApi = PaymentApiCordova.getInstance();
+
+var paymentClient = paymentApi.getPaymentClient();
+
+```
+
+See the [AppFlow Payment Initiation API](https://github.com/AEVI-AppFlow/pos-javascript-api) for details on how to use the payment API and models.
+
+
 ## Bugs and Feedback
 For bugs, feature requests and questions please use GitHub Issues.
 
