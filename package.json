@@ -1,6 +1,6 @@
 {
   "name": "appflow-cordova-plugin",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "main": "www/index.js",
   "scripts": {
     "build": "tsc",
