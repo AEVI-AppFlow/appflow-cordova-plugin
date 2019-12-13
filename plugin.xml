@@ -30,6 +30,9 @@
         <js-module name="AppFlowPlugin" src="www/index.js">
             <clobbers target="cordova.plugins.AppFlowPlugin" />
         </js-module>
+        <js-module src="www/require.js" name="require"></js-module>
+        <js-module src="www/payment-api-cordova.js" name="payment-api-cordova"></js-module>
+        <js-module src="www/payment-client-cordova.js" name="payment-client-cordova"></js-module>
     </platform>
     <platform name="browser">
         <config-file target="config.xml" parent="/*">
