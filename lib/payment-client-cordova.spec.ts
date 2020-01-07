@@ -1,7 +1,7 @@
 import { Observable } from 'rxjs';
 
 import { PaymentClientCordova } from "./payment-client-cordova";
-import { PaymentSettings, PaymentBuilder, Amounts, PaymentResponse, Request, Response, FlowEvent } from 'appflow-payment-initiation-api';
+import { PaymentSettings, PaymentBuilder, Amounts, PaymentResponse, Request, Response, FlowEvent, ResponseQuery } from 'appflow-payment-initiation-api';
 
 import { CordovaMock } from "./__mocks__/cordova-mock";
 window.cordova = new CordovaMock("hello.test.api", true, "hello.processing.ver");
@@ -104,5 +104,24 @@ describe('PaymentCLientCordova', () => {
 
         (<CordovaMock>window.cordova).fireFlowEvents(events);
     });
+
+    it('should get query payment responses', done => {
+        var pcc = new PaymentClientCordova();
+        var responseQuery = ResponseQuery.from("67678", "blarp", "bloop", 0, 0, 100);
+        var resp = PaymentResponse.fromJson(JSON.stringify(paymentResponse));
+        var expect = [resp, resp, resp, resp, resp, resp, resp];
+
+        verfiyObservableValues(pcc.queryPaymentResponses(responseQuery), expect, done);
+    });
+
+    it('should get query responses', done => {
+        var pcc = new PaymentClientCordova();
+        var responseQuery = ResponseQuery.from("67678", "blarp", "bloop", 0, 0, 100);
+        var resp = Response.fromJson(JSON.stringify(response));
+        var expect = [resp, resp, resp, resp, resp, resp, resp];
+
+        verfiyObservableValues(pcc.queryResponses(responseQuery), expect, done);
+    });
+
 
 });

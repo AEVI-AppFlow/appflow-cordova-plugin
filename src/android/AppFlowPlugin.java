@@ -32,6 +32,7 @@ import com.aevi.sdk.pos.flow.PaymentClient;
 import com.aevi.sdk.pos.flow.PaymentApi;
 import com.aevi.sdk.pos.flow.model.Payment;
 import com.aevi.sdk.flow.model.Request;
+import com.aevi.sdk.flow.model.ResponseQuery;
 
 /**
  * This class echoes a string called from JavaScript.
@@ -52,12 +53,18 @@ public class AppFlowPlugin extends CordovaPlugin {
     private static final String INITIATE_PAYMENT = "initiatePayment";
     private static final String INITIATE_REQUEST = "initiateRequest";
 
+    private static final String QUERY_PAYMENT_RESPONSES = "queryPaymentResponses";
+    private static final String QUERY_RESPONSES = "queryResponses";
+
     private PaymentClient paymentClient;
     private Context context;
 
     private static CallbackContext paymentResponseCallback = null;    
     private static CallbackContext responseCallback = null;
     private static CallbackContext eventsCallback = null;
+
+    private static CallbackContext queryPaymentCallback = null;
+    private static CallbackContext queryResponseCallback = null;
 
     private Disposable eventsDispose;
 
@@ -124,6 +131,14 @@ public class AppFlowPlugin extends CordovaPlugin {
             case SET_SYSTEM_EVENTS_CALLBACK:
                 eventsCallback = callbackContext;
                 return true;
+            case QUERY_PAYMENT_RESPONSES:
+                queryPaymentCallback = callbackContext;
+                queryPayments(args);
+                return true;
+            case QUERY_RESPONSES:
+                queryResponseCallback = callbackContext;
+                queryResponses(args);
+                return true;
             case CLEAR_EVENTS_CALLBACK:
                 eventsCallback = null;
                 if(eventsDispose != null) {
@@ -178,4 +193,37 @@ public class AppFlowPlugin extends CordovaPlugin {
     private void getApiVersion(CallbackContext callbackContext) {
         callbackContext.success(PaymentApi.getApiVersion());
     }
+
+    private void queryPayments(JSONArray args) throws JSONException {
+        if(args.length() >= 1) {
+            String json = args.getString(0);
+            ResponseQuery responseQuery = ResponseQuery.fromJson(json);
+            paymentClient.queryPaymentResponses(responseQuery)
+                            .doOnComplete(() -> { queryPaymentCallback.success(""); })
+                            .subscribe(paymentResponse -> {
+                                PluginResult result = new PluginResult(PluginResult.Status.OK, paymentResponse.toJson());
+                                result.setKeepCallback(true);
+                                queryPaymentCallback.sendPluginResult(result);
+                            }, throwable -> {
+                                queryPaymentCallback.error(throwable.getMessage());
+                            });
+        }
+    }
+
+    private void queryResponses(JSONArray args) throws JSONException {
+        if(args.length() >= 1) {
+            String json = args.getString(0);
+            ResponseQuery responseQuery = ResponseQuery.fromJson(json);
+            paymentClient.queryResponses(responseQuery)
+                            .doOnComplete(() -> { queryResponseCallback.success(""); })
+                            .subscribe(response -> {
+                                PluginResult result = new PluginResult(PluginResult.Status.OK, response.toJson());
+                                result.setKeepCallback(true);
+                                queryResponseCallback.sendPluginResult(result);
+                            }, throwable -> {
+                                queryResponseCallback.error(throwable.getMessage());
+                            });
+        }
+    }
+
 }

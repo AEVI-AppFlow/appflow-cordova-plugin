@@ -12,7 +12,7 @@
  *  limitations under the License.
  */
 import { PaymentApi, PaymentClient } from 'appflow-payment-initiation-api';
-import { cordovaExec, PaymentClientCordova } from './payment-client-cordova';
+import { PaymentClientCordova } from './payment-client-cordova';
 import { Observable, BehaviorSubject } from 'rxjs';
 
 export class PaymentApiCordova implements PaymentApi {
@@ -42,7 +42,7 @@ export class PaymentApiCordova implements PaymentApi {
      * @return The API version
      */
     public getApiVersion(): Observable<string> {
-        cordovaExec<string>('getApiVersion').then((version) => {
+        this.paymentClient.cordovaExec<string>('getApiVersion').then((version) => {
             this.apiVersion.next(version);
         }).catch((e) => {
             this.apiVersion.error(e);
@@ -59,7 +59,7 @@ export class PaymentApiCordova implements PaymentApi {
      * @return True if API processing service is installed, false otherwise
      */
     public isProcessingServiceInstalled(): Observable<boolean> {
-        cordovaExec<boolean>('isProcessingServiceInstalled').then((installed) => {
+        this.paymentClient.cordovaExec<boolean>('isProcessingServiceInstalled').then((installed) => {
             this.processingServiceInstalled.next(installed);
         }).catch((e) => {
             this.processingServiceInstalled.error(e);
@@ -74,7 +74,7 @@ export class PaymentApiCordova implements PaymentApi {
      * @return The processing service version (semver format)
      */
     public getProcessingServiceVersion(): Observable<string> {
-        cordovaExec<string>('getProcessingServiceVersion').then((version) => {
+        this.paymentClient.cordovaExec<string>('getProcessingServiceVersion').then((version) => {
             this.processingServiceVersion.next(version);
         }).catch((e) => {
             this.processingServiceVersion.error(e);
