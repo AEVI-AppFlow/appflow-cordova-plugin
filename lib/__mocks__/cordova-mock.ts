@@ -64,6 +64,26 @@ export class CordovaMock implements Cordova {
             case "setSystemEventsCallback":
                 this.eventsCallback = success;
                 return;
+            case "queryPaymentResponses":
+                success(JSON.stringify(paymentResponse));
+                success(JSON.stringify(paymentResponse));
+                success(JSON.stringify(paymentResponse));
+                success(JSON.stringify(paymentResponse));
+                success(JSON.stringify(paymentResponse));
+                success(JSON.stringify(paymentResponse));
+                success(JSON.stringify(paymentResponse));
+                success("");
+                return;
+            case "queryResponses":
+                success(JSON.stringify(response));
+                success(JSON.stringify(response));
+                success(JSON.stringify(response));
+                success(JSON.stringify(response));
+                success(JSON.stringify(response));
+                success(JSON.stringify(response));
+                success(JSON.stringify(response));
+                success("");
+                return;
         }
         throw new Error("Method not implemented.");
     }

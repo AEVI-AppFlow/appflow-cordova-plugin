@@ -17,20 +17,36 @@ import { PaymentClient, Payment, PaymentResponse, ResponseQuery, FlowEvent, Devi
 
 declare var cordova: Cordova;
 
-export function cordovaExec<T>(action: string, args?: any[]): Promise<T> {
-    return new Promise<T>((resolve, reject) => {
-        cordova.exec((response) => {
-            resolve(response);
-        }, (e) => {
-            reject(`${e}`);
-        }, 'AppFlowPlugin', action, args);
-    })
+abstract class ResponseHandler<T> {
+    protected responseSubject = new ReplaySubject<T>();
+
+    public abstract handler(json: string): void;
+
+    public onResponse(json: string) {
+        if(json === "") {
+            this.responseSubject.complete();
+        } else {
+            this.handler(json);
+        }
+    }
+
+    public observe(): Observable<T> {
+        return this.responseSubject.asObservable();
+    }
 }
 
-export function cordovaExecCallback<T>(action: string, callback: (data: string) => void, args?: any[]) {
-    cordova.exec(callback, (e) => {
-        console.log(`Failed to setup callback action ${e}`);
-    }, 'AppFlowPlugin', action, args);
+class PaymentResponseHandler extends ResponseHandler<PaymentResponse> {
+    public handler(json: string): void {
+        var paymentResponse = PaymentResponse.fromJson(json);
+        this.responseSubject.next(paymentResponse);
+    }
+}
+
+class GenericResponseHandler extends ResponseHandler<Response> {
+    public handler(json: string): void {
+        var response = Response.fromJson(json);
+        this.responseSubject.next(response);
+    }
 }
 
 export class PaymentClientCordova implements PaymentClient {
@@ -39,12 +55,14 @@ export class PaymentClientCordova implements PaymentClient {
     private static responseSubject = new Subject<Response>();
     private static eventsSubject = new Subject<FlowEvent>();
 
+    private static responseQuerySubject: Subject<Response>;
+
     private paymentSettings: ReplaySubject<PaymentSettings> = new ReplaySubject(1);
 
     constructor() {
         PaymentClientCordova.eventsSubject.pipe(
             finalize(() => {
-                cordovaExec<string>('clearEventsCallback').then(() => {
+                this.cordovaExec<string>('clearEventsCallback').then(() => {
                     console.log("Events callback cleared");
                 });
             }), 
@@ -52,8 +70,8 @@ export class PaymentClientCordova implements PaymentClient {
         );
 
         // setup the response callbacks
-        cordovaExecCallback<string>('setPaymentResponseCallback', this.onPaymentResponse);
-        cordovaExecCallback<string>('setResponseCallback', this.onResponse);
+        this.cordovaExecCallback<string>('setPaymentResponseCallback', this.onPaymentResponse);
+        this.cordovaExecCallback<string>('setResponseCallback', this.onResponse);
     }
 
     /**
@@ -66,7 +84,7 @@ export class PaymentClientCordova implements PaymentClient {
      * @return Single emitting a {@link PaymentSettings} instance
      */
     public getPaymentSettings(): Observable<PaymentSettings> {
-        cordovaExec<string>('getPaymentSettings').then((json) => {
+        this.cordovaExec<string>('getPaymentSettings').then((json) => {
             var ps = PaymentSettings.fromJson(json);
             this.paymentSettings.next(ps);
         }).catch((e) => {
@@ -93,7 +111,7 @@ export class PaymentClientCordova implements PaymentClient {
      * @return Completable that represents the acceptance of the request
      */
     public initiateRequest(request: Request): Promise<void> {
-        return cordovaExec<void>('initiateRequest', [request.toJson()]);
+        return this.cordovaExec<void>('initiateRequest', [request.toJson()]);
     }
 
     /**
@@ -114,7 +132,7 @@ export class PaymentClientCordova implements PaymentClient {
      */
     public initiatePayment(payment: Payment): Promise<void> {
         console.log("initiatePayment");
-        return cordovaExec('initiatePayment', [payment.toJson()]);
+        return this.cordovaExec('initiatePayment', [payment.toJson()]);
     }
 
     /**
@@ -128,8 +146,10 @@ export class PaymentClientCordova implements PaymentClient {
      * @return An Observable stream of payment responses
      */
     public queryPaymentResponses(responseQuery: ResponseQuery):  Observable<PaymentResponse> {
-        console.log("queryPaymentResponses - Not implemented yet!");
-        return NEVER;
+        console.log("queryPaymentResponses");        
+        var handler = new PaymentResponseHandler();
+        this.cordovaExecHandler('queryPaymentResponses', handler, [responseQuery.toJson(), {keepCallback: true}]);
+        return handler.observe();
     }
 
     /**
@@ -143,8 +163,10 @@ export class PaymentClientCordova implements PaymentClient {
      * @return An Observable stream of responses
      */
     public queryResponses(responseQuery: ResponseQuery): Observable<Response> {
-        console.log("queryResponses - Not implemented yet!");
-        return NEVER;
+        console.log("queryResponses");
+        var handler = new GenericResponseHandler();
+        this.cordovaExecHandler('queryResponses', handler, [responseQuery.toJson(), {keepCallback: true}]);
+        return handler.observe();
     }
 
     /**
@@ -173,7 +195,7 @@ export class PaymentClientCordova implements PaymentClient {
      * @return A stream that will emit {@link FlowEvent} items
      */
     public subscribeToSystemEvents(): Observable<FlowEvent> {
-        cordovaExecCallback('setSystemEventsCallback', this.onFlowEvent, [{keepCallback: true}]);
+        this.cordovaExecCallback('setSystemEventsCallback', this.onFlowEvent, [{keepCallback: true}]);
         return PaymentClientCordova.eventsSubject.asObservable();
     }
 
@@ -201,4 +223,29 @@ export class PaymentClientCordova implements PaymentClient {
     public subscribeToResponses(): Observable<Response> {
         return PaymentClientCordova.responseSubject.asObservable();
     }
+
+    public cordovaExec<T>(action: string, args?: any[]): Promise<T> {
+        return new Promise<T>((resolve, reject) => {
+            cordova.exec((response) => {
+                resolve(response);
+            }, (e) => {
+                reject(`${e}`);
+            }, 'AppFlowPlugin', action, args);
+        })
+    }
+    
+    public cordovaExecCallback<T>(action: string, callback: (data: string) => void, args?: any[]) {
+        cordova.exec(callback, (e) => {
+            console.log(`Failed to setup callback action ${e}`);
+        }, 'AppFlowPlugin', action, args);
+    }
+
+    public cordovaExecHandler<T>(action: string, handler: ResponseHandler<T>, args?: any[]) {
+        cordova.exec((response) => {
+            handler.onResponse(response);
+        }, (e) => {
+            console.log(`Failed to setup callback action ${e}`);
+        }, 'AppFlowPlugin', action, args);
+    }
+    
 }

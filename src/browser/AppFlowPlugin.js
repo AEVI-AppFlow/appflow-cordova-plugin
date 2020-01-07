@@ -47,7 +47,7 @@ module.exports = {
         success("Payment initiated");
         if(paymentResponseCallback) {
             console.log("Responding with default payment response");
-            paymentResponseCallback(JSON.stringify(paymentResponse));
+            paymentResponseCallback(JSON.stringify(paymentResponse), { keepCallback: true});
         }
     },
     initiateRequest: function(success, error, opts) {
@@ -57,23 +57,23 @@ module.exports = {
             switch(request.requestType) {
                 case "reversal":
                     console.log("Responding with default response");
-                    responseCallback(JSON.stringify(reversalResponse));
+                    responseCallback(JSON.stringify(reversalResponse), { keepCallback: true});
                     break;
                 case "tokenisation":
                     console.log("Responding with tokenisation response");
-                    responseCallback(JSON.stringify(tokenisationResponse));
+                    responseCallback(JSON.stringify(tokenisationResponse), { keepCallback: true});
                     break;
                 case "receiptDelivery":
                     console.log("Responding with receipt response");
-                    responseCallback(JSON.stringify(receiptResponse));
+                    responseCallback(JSON.stringify(receiptResponse), { keepCallback: true});
                     break;
                 case "showLoyaltyPointsBalance":
                     console.log("Responding with loyalty response");
-                    responseCallback(JSON.stringify(loyaltyResponse));
+                    responseCallback(JSON.stringify(loyaltyResponse), { keepCallback: true});
                     break;
                 case "basketStatusUpdate":
                     console.log("Responding with basket update response");
-                    responseCallback(JSON.stringify(basketUpdateResponse));
+                    responseCallback(JSON.stringify(basketUpdateResponse), { keepCallback: true});
                     break;
                 default:
                     console.log("AppFlowPlugin: Unexpected request type in browser");
@@ -86,4 +86,4 @@ module.exports = {
     }
 };
 
-require('cordova/exec/proxy').add('AppFlowPlugin', module.exports);
+require('cordova/exec/proxy').add('AppFlowPlugin', module.exports);;

@@ -1,6 +1,6 @@
 {
     "compilerOptions": {
-        "target": "es2015",
+        "target": "es5",
         "module": "amd",
         "declaration": true,
         "outDir": "./www",
