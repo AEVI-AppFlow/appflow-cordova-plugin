@@ -24,7 +24,6 @@
   "dependencies": {
     "@types/cordova": "0.0.34",
     "@types/node": "^13.1.4",
-    "appflow-payment-initiation-api": "0.0.2",
     "rxjs": "6.4.0"
   },
   "devDependencies": {

@@ -6,7 +6,9 @@
         "outDir": "./www",
         "strict": true,
         "strictPropertyInitialization": false,
-        "moduleResolution": "node"
+        "moduleResolution": "node",
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true
     },
     "exclude": [
         "www"

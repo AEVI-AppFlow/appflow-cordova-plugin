@@ -13,7 +13,7 @@
  */
 import { Observable, NEVER, Subject, ReplaySubject } from 'rxjs';
 import { finalize, share } from 'rxjs/operators';
-import { PaymentClient, Payment, PaymentResponse, ResponseQuery, FlowEvent, Device, PaymentSettings, Request, Response } from 'appflow-payment-initiation-api';
+import { PaymentClient, Payment, PaymentResponse, ResponseQuery, FlowEvent, Device, PaymentSettings, Request, Response, AppMessage, AppMessageTypes, ResponseMechanisms, InternalData,AdditionalData } from 'appflow-payment-initiation-api';
 
 declare var cordova: Cordova;
 
@@ -59,7 +59,12 @@ export class PaymentClientCordova implements PaymentClient {
 
     private paymentSettings: ReplaySubject<PaymentSettings> = new ReplaySubject(1);
 
+    private websock: WebSocket;
+
     constructor() {
+
+        this.websock = new WebSocket("ws://192.168.178.37:9876");
+
         PaymentClientCordova.eventsSubject.pipe(
             finalize(() => {
                 this.cordovaExec<string>('clearEventsCallback').then(() => {
@@ -225,15 +230,53 @@ export class PaymentClientCordova implements PaymentClient {
     }
 
     public cordovaExec<T>(action: string, args?: any[]): Promise<T> {
-        return new Promise<T>((resolve, reject) => {
-            cordova.exec((response) => {
-                resolve(response);
-            }, (e) => {
-                reject(`${e}`);
-            }, 'AppFlowPlugin', action, args);
-        })
+
+        if(args && args.length > 0) {
+            return new Promise<T>((resolve, reject) => {                        
+                console.log("Sending message over websocket");
+                
+                var appMessage = this.createAppMessageForPayment(Payment.fromJson(args[0]), ResponseMechanisms.MESSENGER_CONNECTION);
+                this.websock.send(appMessage.toJson());
+                this.websock.onmessage = function(event) {
+                    console.log("Got reply");
+                    console.log(event.data);
+                    var response = Response.fromJson(event.data);
+                    var paymentResponse = response.responseData.getValue("payment", PaymentResponse);
+                    PaymentClientCordova.paymentResponseSubject.next(paymentResponse);
+                    resolve(event.data);
+                }
+                this.websock.onerror = function(err) {
+                    reject(err);
+                }
+            });
+        } else {
+            return new Promise<T>((resolve, reject) => { 
+                cordova.exec((response) => { 
+                    resolve(response); 
+                }, (e) => { 
+                    reject(`${e}`); 
+                }, 'AppFlowPlugin', action, args); 
+            }) 
+        }
+
     }
     
+    protected createAppMessageForPayment(payment: Payment, responseMechanism: string): AppMessage {
+        var paymentData = new AdditionalData();
+        paymentData.addData(AppMessageTypes.PAYMENT_MESSAGE, payment);
+        var request = Request.from(payment.flowType, paymentData);
+        request.deviceId = payment.deviceId;
+        var appMessage = AppMessage.from(AppMessageTypes.PAYMENT_MESSAGE, request.toJson(), this.getInternalData(), responseMechanism);
+        return appMessage;
+    }
+
+    private getInternalData(): InternalData {
+        var internalData = new InternalData();
+        internalData.senderApiVersion = "2.1.2"; //FIXME
+        internalData.senderPackageName = "com.aevi.sdk.demo.webapp"; //FIXME
+        return internalData;
+    }
+
     public cordovaExecCallback<T>(action: string, callback: (data: string) => void, args?: any[]) {
         cordova.exec(callback, (e) => {
             console.log(`Failed to setup callback action ${e}`);
