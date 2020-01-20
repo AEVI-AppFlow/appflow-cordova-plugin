@@ -1,14 +1,17 @@
 import { Observable } from 'rxjs';
 
 import { PaymentClientCordova } from "./payment-client-cordova";
-import { PaymentSettings, PaymentBuilder, Amounts, PaymentResponse, Request, Response, FlowEvent, ResponseQuery } from 'appflow-payment-initiation-api';
+import { PaymentSettings, PaymentBuilder, Amounts, PaymentResponse, Request, Response, FlowEvent, ResponseQuery, FlowException, ErrorConstants } from 'appflow-payment-initiation-api';
 
 import { CordovaMock } from "./__mocks__/cordova-mock";
-window.cordova = new CordovaMock("hello.test.api", true, "hello.processing.ver");
 
 var paymentSettings = require('../src/browser/payment-settings'); // test/mock settings data
 var paymentResponse = require('../src/browser/payment-response'); // test/mock response data
 var response = require('../src/browser/reversal-response'); // test/mock response data
+var payment = new PaymentBuilder()
+                        .withPaymentFlow("sale")
+                        .withAmounts(Amounts.from(1000, "GBP"))
+                        .build();
 
 function verfiyObservableValues<T>(observable: Observable<T>, vals: T[], done: jest.DoneCallback) {
     var indx = 0;
@@ -36,7 +39,12 @@ function verfiyObservableFails<T>(observable: Observable<T>, done: jest.DoneCall
     });
 }
 
-describe('PaymentCLientCordova', () => {
+describe('PaymentClientCordova', () => {
+
+    beforeEach(() => {
+        window.cordova = new CordovaMock("hello.test.api", true, "hello.processing.ver");
+    });
+
     it('should create an instance', () => {
         expect(new PaymentClientCordova()).toBeTruthy();
     });
@@ -57,11 +65,6 @@ describe('PaymentCLientCordova', () => {
     it('should initiate a payment request', done => {
         var pcc = new PaymentClientCordova();
 
-        var payment = new PaymentBuilder()
-                            .withPaymentFlow("sale")
-                            .withAmounts(Amounts.from(1000, "GBP"))
-                            .build();
-
         verfiyObservableValues(pcc.subscribeToPaymentResponses(), [PaymentResponse.fromJson(JSON.stringify(paymentResponse))], done);
 
         pcc.initiatePayment(payment).then(() => {
@@ -71,7 +74,24 @@ describe('PaymentCLientCordova', () => {
         });
     });
 
-    it('should handle payment initiation error', done => {
+    it('should send and handle payment response error', done => {
+        var pcc = new PaymentClientCordova();
+
+        (<CordovaMock>window.cordova).shouldErrorOnInitiatePayment(true);
+
+        pcc.subscribeToPaymentResponseErrors().subscribe(flowException => {
+            expect(flowException.errorCode).toBe(ErrorConstants.INVALID_REQUEST);
+            done();
+        });
+
+        pcc.initiatePayment(payment).then(() => {
+            // nothing
+        }).catch((e) => {
+            done("Failed to initiate payment: " + e);
+        });
+    });
+
+    it('should handle payment settings error', done => {
         var pcc = new PaymentClientCordova();
         (<CordovaMock>window.cordova).shouldErrorOnGetPaymentSettings(true);
 
@@ -84,6 +104,24 @@ describe('PaymentCLientCordova', () => {
         var request = Request.from("blahdeblah");
         verfiyObservableValues(pcc.subscribeToResponses(), [Response.fromJson(JSON.stringify(response))], done);
 
+        pcc.initiateRequest(request).then(() => {
+            // nothing
+        }).catch((e) => {
+            done("Failed to initiate request: " + e);
+        });
+    });
+
+    it('should send and handle response error', done => {
+        var pcc = new PaymentClientCordova();
+
+        (<CordovaMock>window.cordova).shouldErrorOnInitiateRequest(true);
+
+        pcc.subscribeToResponseErrors().subscribe(flowException => {
+            expect(flowException.errorCode).toBe(ErrorConstants.INVALID_REQUEST);
+            done();
+        });
+
+        var request = Request.from("blahdeblah");
         pcc.initiateRequest(request).then(() => {
             // nothing
         }).catch((e) => {

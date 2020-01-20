@@ -28,7 +28,7 @@ public class AppFlowPaymentResponseListenerService extends BasePaymentResponseLi
 
     @Override
     protected void notifyResponse(PaymentResponse paymentResponse) {
-        Log.d("XXX", "Got response: " + paymentResponse.toJson());
+        Log.d("AppFlowPaymentResponseListenerService", "Got response: " + paymentResponse.toJson());
         CallbackContext callback = AppFlowPlugin.getPaymentResponseCallback();
         if(callback != null) {
             PluginResult result = new PluginResult(PluginResult.Status.OK, paymentResponse.toJson());
@@ -39,7 +39,7 @@ public class AppFlowPaymentResponseListenerService extends BasePaymentResponseLi
 
     @Override
     protected void notifyError(String errorCode, String errorMessage) {
-        Log.d("XXX", "Got response error: " + errorCode + " " + errorMessage);
+        Log.d("AppFlowPaymentResponseListenerService", "Got response error: " + errorCode + " " + errorMessage);
         CallbackContext callback = AppFlowPlugin.getPaymentResponseCallback();
         if(callback != null) {
             FlowException fe = new FlowException(errorCode, errorMessage);

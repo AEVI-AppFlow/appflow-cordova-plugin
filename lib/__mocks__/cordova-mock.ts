@@ -2,7 +2,7 @@ var paymentSettings = require('../../src/browser/payment-settings');
 var paymentResponse = require('../../src/browser/payment-response');
 var response = require('../../src/browser/reversal-response');
 
-import { FlowEvent } from 'appflow-payment-initiation-api';
+import { FlowEvent, ErrorConstants, FlowException } from 'appflow-payment-initiation-api';
 
 export class CordovaMock implements Cordova {
     
@@ -11,10 +11,14 @@ export class CordovaMock implements Cordova {
     platformId: string;
 
     paymentResponseCallback: (data: any) => void;
+    paymentResponseCallbackError: (err: any) => void;
     responseCallback: (data: any) => void;
+    responseCallbackError: (err: any) => void;
     eventsCallback: (data: any) => void;
 
     paymentSettingsError = false;
+    paymentInitiateError = false;
+    requestInitiateError = false;
 
     constructor(private apiVersion: string, private processingServiceInstalled: boolean, private processingServiceVersion: string) {
 
@@ -40,26 +44,40 @@ export class CordovaMock implements Cordova {
                 }
                 return;
             case "initiatePayment":
-                if(this.paymentResponseCallback) {
-                    let paymentResp = JSON.stringify(paymentResponse);
-                    this.paymentResponseCallback(paymentResp);
-                    delete this.paymentResponseCallback;
-                }
                 success("Bleep");
+                if(this.paymentResponseCallback) {
+                    if(this.paymentInitiateError) {
+                        var fe = FlowException.from(ErrorConstants.INVALID_REQUEST, "Its all gone wrong Gromit!");
+                        this.paymentResponseCallbackError(fe.toJson());
+                    } else {
+                        let paymentResp = JSON.stringify(paymentResponse);
+                        this.paymentResponseCallback(paymentResp);
+                    }
+                    delete this.paymentResponseCallback;
+                    delete this.paymentResponseCallbackError;
+            }
                 return;
             case "initiateRequest":
-                if(this.responseCallback) {
-                    let theResponse = JSON.stringify(response);
-                    this.responseCallback(theResponse);
-                    delete this.responseCallback;
-                }
                 success("Bleep");
+                if(this.responseCallback) {
+                    if(this.requestInitiateError) {
+                        var fe = FlowException.from(ErrorConstants.INVALID_REQUEST, "I've got a bad feeling about this!");
+                        this.responseCallbackError(fe.toJson());
+                    } else {
+                        let theResponse = JSON.stringify(response);
+                        this.responseCallback(theResponse);
+                    }
+                    delete this.responseCallback;
+                    delete this.responseCallbackError;
+                }
                 return;
             case "setPaymentResponseCallback":
                 this.paymentResponseCallback = success;
+                this.paymentResponseCallbackError = fail;
                 return;
             case "setResponseCallback":
                 this.responseCallback = success;
+                this.responseCallbackError = fail;
                 return;
             case "setSystemEventsCallback":
                 this.eventsCallback = success;
@@ -102,6 +120,14 @@ export class CordovaMock implements Cordova {
                 this.eventsCallback(flowEvent.toJson());
             }
         }
+    }
+
+    shouldErrorOnInitiatePayment(shouldError: boolean) {
+        this.paymentInitiateError = shouldError;
+    }
+
+    shouldErrorOnInitiateRequest(shouldError: boolean) {
+        this.requestInitiateError = shouldError;
     }
 
     shouldErrorOnGetPaymentSettings(shouldError: boolean) {

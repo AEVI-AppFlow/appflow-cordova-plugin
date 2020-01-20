@@ -29,7 +29,7 @@ public class AppFlowResponseListenerService extends BaseResponseListenerService 
 
     @Override
     protected void notifyGenericResponse(Response response) {
-        Log.d("XXX", "Got generic response: " + response.toJson());
+        Log.d("AppFlowResponseListenerService", "Got generic response: " + response.toJson());
         CallbackContext callback = AppFlowPlugin.getResponseCallback();
         if(callback != null) {
             PluginResult result = new PluginResult(PluginResult.Status.OK, response.toJson());
@@ -45,7 +45,7 @@ public class AppFlowResponseListenerService extends BaseResponseListenerService 
 
     @Override
     protected void notifyError(String errorCode, String errorMessage) {
-        Log.d("XXX", "Got response error: " + errorCode + " " + errorMessage);
+        Log.d("AppFlowResponseListenerService", "Got response error: " + errorCode + " " + errorMessage);
         CallbackContext callback = AppFlowPlugin.getResponseCallback();
         if(callback != null) {
             FlowException fe = new FlowException(errorCode, errorMessage);

@@ -13,16 +13,12 @@
  */
 import { PaymentApi, PaymentClient } from 'appflow-payment-initiation-api';
 import { PaymentClientCordova } from './payment-client-cordova';
-import { Observable, BehaviorSubject } from 'rxjs';
 
 export class PaymentApiCordova implements PaymentApi {
 
     private static instance: PaymentApiCordova;
 
     private paymentClient = new PaymentClientCordova();
-    private apiVersion: BehaviorSubject<string> = new BehaviorSubject("Unknown");
-    private processingServiceInstalled: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
-    private processingServiceVersion: BehaviorSubject<string> = new BehaviorSubject("Unknown");
 
     public static getInstance(): PaymentApi {
         if (!PaymentApiCordova.instance) {
@@ -39,16 +35,10 @@ export class PaymentApiCordova implements PaymentApi {
      *
      * The API versioning follows semver rules with major.minor.patch versions.
      *
-     * @return The API version
+     * @return A Promise that will resolve to the current API version
      */
-    public getApiVersion(): Observable<string> {
-        this.paymentClient.cordovaExec<string>('getApiVersion').then((version) => {
-            this.apiVersion.next(version);
-        }).catch((e) => {
-            this.apiVersion.error(e);
-        });
-
-        return this.apiVersion.asObservable();
+    public getApiVersion(): Promise<string> {
+        return this.paymentClient.cordovaExec<string>('getApiVersion');
     }
 
     /**
@@ -56,31 +46,19 @@ export class PaymentApiCordova implements PaymentApi {
      *
      * If not installed, none of the API calls will function.
      *
-     * @return True if API processing service is installed, false otherwise
+     * @return A Promise that will resolve to True if API processing service is installed, false otherwise
      */
-    public isProcessingServiceInstalled(): Observable<boolean> {
-        this.paymentClient.cordovaExec<boolean>('isProcessingServiceInstalled').then((installed) => {
-            this.processingServiceInstalled.next(installed);
-        }).catch((e) => {
-            this.processingServiceInstalled.error(e);
-        });
-
-        return this.processingServiceInstalled.asObservable();
+    public isProcessingServiceInstalled(): Promise<boolean> {
+        return this.paymentClient.cordovaExec<boolean>('isProcessingServiceInstalled');
     }
 
     /**
      * Get the processing service version installed on this device.
      *
-     * @return The processing service version (semver format)
+     * @return A promise that will resolve to the processing service version (semver format)
      */
-    public getProcessingServiceVersion(): Observable<string> {
-        this.paymentClient.cordovaExec<string>('getProcessingServiceVersion').then((version) => {
-            this.processingServiceVersion.next(version);
-        }).catch((e) => {
-            this.processingServiceVersion.error(e);
-        });;
-
-        return this.processingServiceVersion.asObservable();
+    public getProcessingServiceVersion(): Promise<string> {
+        return this.paymentClient.cordovaExec<string>('getProcessingServiceVersion');
     }
 
     /**
@@ -91,6 +69,4 @@ export class PaymentApiCordova implements PaymentApi {
     public getPaymentClient(): PaymentClient {
         return this.paymentClient;
     }
-
-
 }
